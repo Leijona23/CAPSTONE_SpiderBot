@@ -1,0 +1,186 @@
+#include <SoftwareSerial.h>
+#include <ArduinoBlue.h>
+#include <Servo.h>
+//For Bluetooth
+const unsigned long BAUD_RATE = 9600;
+int speed;
+int speedPinOne = 6; // Pin 9 on the IC
+int speedPinTwo = 11; // Pin 1 on the IC
+int m1PinOne = 8; // Pin 15 on the IC
+int m1PinTwo = 10; // Pin 10 on the IC
+int m2PinOne = 12; //Pin 2 on the IC
+int m2PinTwo = 9; // Pin 7 on the IC
+//Sets pin position of each Servo
+int servo1 = 7;
+int servo2 = 5;
+int servo3 = 4;
+int echo = 3;
+int trig = 2;
+const int rx = 0;
+const int tx = 1;
+Servo ServoOne; //Servo on the left side of the car
+Servo ServoTwo; //Servo on the right side of the car
+Servo ServoThree; //Controls Catapult
+
+//More bluetooth
+SoftwareSerial bluetooth(tx, rx);
+ArduinoBlue phone(bluetooth);
+//Sets an integer to record the corresponding button push on a cellular device
+int button;
+
+
+
+void setup() {
+  Serial.begin(BAUD_RATE);
+  bluetooth.begin(BAUD_RATE);
+  //Shown in example code -- utilized to give time for the bluetooth module to boot
+  delay(100);
+  for(int i = 0; i <= 13; i++){
+    if(i != echo && i != rx){
+      pinMode(i, OUTPUT);
+    }
+    else{
+     pinMode(i, INPUT);
+    }
+  ServoOne.attach(servo1);
+  ServoTwo.attach(servo2);
+  ServoThree.attach(servo3);
+}
+}
+
+void loop() {
+  button = phone.getButton();
+  Serial.println(button);
+  /*Sets the speed of the DC Motors to 0 and stops the servo -- esentially makes the default
+  *behavior of the spider-bot to stand still. 
+  *See "defaultPause" method for a better overview of the method's functionality
+  */
+  defaultPause();
+  if(button == 0){
+    speed = 200;
+    forward();
+  }
+  if(button == 1){
+    speed = 200;
+    reverse();
+  }
+  if(button == 2){
+    speed = 200;
+    turnRight();
+  }
+  if(button == 3){
+    speed = 200;
+    turnLeft();
+  }
+  if(button == 4){
+    //Needs to be implemented
+    //catapult(); 
+  }
+  ultraSonic();
+  
+
+}
+
+//Facillitates the functioning of the ultrasonic sensor, and enacts a right hand turn via a method call if in 5 inches of an object
+void ultraSonic(){
+  pinMode(echo, INPUT);
+  pinMode(trig, OUTPUT);
+  long duration, inches;
+
+  pinMode(trig, OUTPUT);
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(trig, LOW);
+
+  pinMode(echo,INPUT);
+  //Sets reading pin
+  duration = pulseIn(echo, HIGH);
+  inches = microsecondsToInches(duration);
+  if(inches <= 5){
+    //beep();
+    turnRight();
+  }
+}
+
+//Return method employed in the ultrasonic method
+long microsecondsToInches(long microseconds){
+  return microseconds / 74 / 2;
+}
+
+
+void forward(){
+  //Forward DC Pattern: LOW/HIGH/HIGH/LOW 
+  //Test and Change these speeds
+  ServoOne.write(50);
+  ServoTwo.write(130);
+  digitalWrite(m1PinOne, LOW); //15
+  digitalWrite(m1PinTwo, HIGH);  //10
+  digitalWrite(m2PinOne, HIGH); //2
+  digitalWrite(m2PinTwo, LOW);  //7
+  digitalWrite(speedPinOne, speed); //200 Is our test speed and default speed for both motors
+  digitalWrite(speedPinTwo, speed);
+}
+
+void reverse(){
+  //Test and Change these speeds
+  //Change these speeds 
+  ServoOne.write(50);
+  ServoTwo.write(130);
+  digitalWrite(m1PinOne, HIGH);
+  digitalWrite(m1PinTwo, LOW);
+  digitalWrite(m2PinOne, LOW);
+  digitalWrite(m2PinTwo, HIGH);
+  digitalWrite(speedPinOne, speed); //200 Is our test speed and default speed for both motors
+  digitalWrite(speedPinTwo, speed);
+}
+
+void turnRight(){
+  //Test and Change these speeds
+  //Change these speeds 
+  ServoOne.write(50);
+  ServoTwo.write(130);
+  digitalWrite(m1PinOne, HIGH); //15
+  digitalWrite(m1PinTwo, LOW);  //10
+  digitalWrite(m2PinOne, HIGH); //2
+  digitalWrite(m2PinTwo, LOW);  //7
+  digitalWrite(speedPinOne, speed); //200 Is our test speed and default speed for both motors
+  digitalWrite(speedPinTwo, speed);
+}
+
+void turnLeft(){
+  //Test and Change these Speeds
+  //Change these speeds 
+  ServoOne.write(50);
+  ServoTwo.write(130);
+  digitalWrite(m1PinOne, LOW); //15
+  digitalWrite(m1PinTwo, HIGH);  //10
+  digitalWrite(m2PinOne, LOW); //2
+  digitalWrite(m2PinTwo, HIGH);  //7
+  digitalWrite(speedPinOne, speed); //200 Is our test speed and default speed for both motors
+  digitalWrite(speedPinTwo, speed);
+}
+
+void defaultPause(){
+  speed = 0;
+  ServoOne.write(90);
+  ServoTwo.write(90);
+  digitalWrite(m1PinOne, LOW); //15
+  digitalWrite(m1PinTwo, LOW);  //10
+  digitalWrite(m2PinOne, LOW); //2
+  digitalWrite(m2PinTwo, LOW);  //7
+  digitalWrite(speedPinOne, speed); //200 Is our test speed and default speed for both motors
+  digitalWrite(speedPinTwo, speed);
+}
+
+//Needs to be implemented
+/*
+void beep(){
+
+}
+
+void catapult(){
+
+}
+*/
